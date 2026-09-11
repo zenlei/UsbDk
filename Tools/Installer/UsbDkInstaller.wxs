@@ -131,7 +131,18 @@
             <?undef OsName ?>
           </Component>
 
-          <?if $(var.UsbDkPlatform) = arm64 ?>
+          <Component Id="UsbDk_TMF" Guid="{2A06187F-4B67-4DBD-86DA-E6FB081CD1B6}" Win64="$(var.UsbDkWin64)">
+            <File Id="UsbDk_TMF" Name="UsbDk.tmf" Source="..\UsbDk.tmf" Vital="yes" KeyPath="no" DiskId="1" ProcessorArchitecture="$(var.UsbDkCpuArch)" />
+          </Component>
+
+        </Directory>
+      </Directory>
+
+      <?if $(var.UsbDkPlatform) = arm64 ?>
+      <!-- Keep x86 files below the 32-bit Program Files tree. WiX ICE80 rejects
+           a 32-bit component below ProgramFiles64Folder on ARM64 Windows. -->
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="UsbDk_X86_Root" Name="UsbDk Runtime Library">
           <Directory Id="UsbDk_X86_Directory" Name="x86">
             <Component Id="UsbDk_ARM64_X86_UserMode" Guid="{A5B8F2F2-3E45-4E32-98A8-4C5F5B1C9D3E}">
               <File Id="UsbDkHelper_x86" Name="UsbDkHelper.dll" Source="Win10$(var.Config)\UsbDk_Package\x86\UsbDkHelper.dll" Vital="yes" KeyPath="no" DiskId="1" ProcessorArchitecture="x86">
@@ -141,14 +152,9 @@
               <File Id="UsbDkInstHelper_x86" Name="UsbDkInstHelper.exe" Source="Win10$(var.Config)\UsbDk_Package\x86\UsbDkInstHelper.exe" Vital="yes" KeyPath="no" DiskId="1" ProcessorArchitecture="x86" />
             </Component>
           </Directory>
-          <?endif?>
-
-          <Component Id="UsbDk_TMF" Guid="{2A06187F-4B67-4DBD-86DA-E6FB081CD1B6}" Win64="$(var.UsbDkWin64)">
-            <File Id="UsbDk_TMF" Name="UsbDk.tmf" Source="..\UsbDk.tmf" Vital="yes" KeyPath="no" DiskId="1" ProcessorArchitecture="$(var.UsbDkCpuArch)" />
-          </Component>
-
         </Directory>
       </Directory>
+      <?endif?>
     </Directory>
 
     <Property Id="MSGBOX" Value=" " />

@@ -46,5 +46,14 @@ if !ERRORLEVEL! NEQ 0 exit /B 1
 "%WIX_LIGHT%" UsbDk.wixobj -out %~2 -sw1076
 if !ERRORLEVEL! NEQ 0 exit /B 1
 
+rem Keep the WDK test certificate beside the MSI for VM test setup. This is
+rem intentionally a sidecar, not an automatic certificate-trust action.
+set "CERT_DIR=Win10%~3"
+if exist "%CERT_DIR%\UsbDk.cer" (
+  set "MSI_BASENAME=%~n2"
+  copy /Y "%CERT_DIR%\UsbDk.cer" "!MSI_BASENAME!.cer" >nul
+  if !ERRORLEVEL! NEQ 0 exit /B 1
+)
+
 popd
 exit /B 0
