@@ -35,14 +35,22 @@
 
 WdfCoinstaller::WdfCoinstaller()
 {
-    loadWdfCoinstaller();
+#if !defined(_ARM64_)
+    if (!IsNativeArm64Windows())
+    {
+        loadWdfCoinstaller();
+    }
+#endif
 }
 
 WdfCoinstaller::~WdfCoinstaller()
 {
+#if !defined(_ARM64_)
     freeWdfCoinstallerLibrary();
+#endif
 }
 
+#if !defined(_ARM64_)
 void WdfCoinstaller::loadWdfCoinstaller()
 {
      TCHAR    currDir[MAX_PATH];
@@ -74,9 +82,20 @@ void WdfCoinstaller::loadWdfCoinstaller()
         throw;
     }
 }
+#endif
 
 bool WdfCoinstaller::PreDeviceInstallEx(const tstring &infFilePath)
 {
+#if defined(_ARM64_)
+    UNREFERENCED_PARAMETER(infFilePath);
+    return true;
+#else
+    if (IsNativeArm64Windows())
+    {
+        UNREFERENCED_PARAMETER(infFilePath);
+        return true;
+    }
+
     WDF_COINSTALLER_INSTALL_OPTIONS clientOptions;
     WDF_COINSTALLER_INSTALL_OPTIONS_INIT(&clientOptions);
 
@@ -95,35 +114,67 @@ bool WdfCoinstaller::PreDeviceInstallEx(const tstring &infFilePath)
     }
 
     return true;
+#endif
 }
 
 void WdfCoinstaller::PostDeviceInstall(const tstring &infFilePath)
 {
+#if defined(_ARM64_)
+    UNREFERENCED_PARAMETER(infFilePath);
+#else
+    if (IsNativeArm64Windows())
+    {
+        UNREFERENCED_PARAMETER(infFilePath);
+        return;
+    }
+
     ULONG res = m_pfnWdfPostDeviceInstall(infFilePath.c_str(), WDF_SECTION_NAME);
     if (ERROR_SUCCESS != res)
     {
         throw UsbDkWdfCoinstallerFailedException(TEXT("WdfPostDeviceInstall() failed"), res);
     }
+#endif
 }
 
 void WdfCoinstaller::PreDeviceRemove(const tstring &infFilePath)
 {
+#if defined(_ARM64_)
+    UNREFERENCED_PARAMETER(infFilePath);
+#else
+    if (IsNativeArm64Windows())
+    {
+        UNREFERENCED_PARAMETER(infFilePath);
+        return;
+    }
+
     ULONG res = m_pfnWdfPreDeviceRemove(infFilePath.c_str(), WDF_SECTION_NAME);
     if (ERROR_SUCCESS != res)
     {
         throw UsbDkWdfCoinstallerFailedException(TEXT("WdfPreDeviceRemove() failed"), res);
     }
+#endif
 }
 
 void WdfCoinstaller::PostDeviceRemove(const tstring &infFilePath)
 {
+#if defined(_ARM64_)
+    UNREFERENCED_PARAMETER(infFilePath);
+#else
+    if (IsNativeArm64Windows())
+    {
+        UNREFERENCED_PARAMETER(infFilePath);
+        return;
+    }
+
     ULONG res = m_pfnWdfPostDeviceRemove(infFilePath.c_str(), WDF_SECTION_NAME);
     if (ERROR_SUCCESS != res)
     {
         throw  UsbDkWdfCoinstallerFailedException(TEXT("WdfPostDeviceRemove() failed"), res);
     }
+#endif
 }
 
+#if !defined(_ARM64_)
 void WdfCoinstaller::freeWdfCoinstallerLibrary()
 {
     if (m_wdfCoinstallerLibrary)
@@ -132,3 +183,4 @@ void WdfCoinstaller::freeWdfCoinstallerLibrary()
         m_wdfCoinstallerLibrary = nullptr;
     }
 }
+#endif

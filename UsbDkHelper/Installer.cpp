@@ -90,7 +90,7 @@ tstring UsbDkInstaller::CopyDriver()
 
     auto driverDestLocation = buildDriverPath(USBDK_DRIVER_FILE_NAME);
 
-    if (!CopyFile(driverOrigLocationStr.c_str(), driverDestLocation.c_str(), TRUE))
+    if (!CopyFile(driverOrigLocationStr.c_str(), driverDestLocation.c_str(), FALSE))
     {
         throw UsbDkInstallerFailedException(tstring(TEXT("CopyFile from ")) + driverOrigLocationStr + TEXT(" to ") + driverDestLocation + TEXT(" failed."));
     }
@@ -272,7 +272,7 @@ void UsbDkInstaller::buildNewListWithoutEement(tstringlist &newfiltersList, tstr
 {
     for (auto filter : filtersList)
     {
-        if (filter != USBDK_DRIVER_NAME)
+        if (filter != element)
         {
             newfiltersList.push_back(filter);
         }
@@ -290,6 +290,12 @@ void UsbDkInstaller::validatePlatform()
 
 bool UsbDkInstaller::isWow64B()
 {
+    // x86/x64 user-mode binaries are intentionally supported under native ARM64 Windows.
+    if (IsNativeArm64Windows())
+    {
+        return false;
+    }
+
     BOOL bIsWow64 = FALSE;
 
     typedef BOOL(WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);

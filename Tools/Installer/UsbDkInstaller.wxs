@@ -1,17 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
-  <?ifdef UsbDk64Bit ?>
-    <?define UsbDkPlatform=x64 ?>
+  <?ifdef UsbDkARM64 ?>
+    <?define UsbDkPlatform=arm64 ?>
     <?define UsbDkProgramFilesFolder= ProgramFiles64Folder ?>
     <?define UsbDkWin64= yes ?>
     <?define System32Dir= "System64Folder" ?>
     <?define SystemWOW64Dir= "SystemFolder" ?>
+    <?define UsbDkCpuArch= arm64 ?>
+    <?define UsbDkHasWOW64= no ?>
+    <?define UsbDkHasCoinstaller= no ?>
+    <?define UsbDkInstallerVersion= 500 ?>
   <?else?>
-    <?define UsbDkPlatform=x86 ?>
-    <?define UsbDkProgramFilesFolder= ProgramFilesFolder ?>
-    <?define UsbDkWin64= no ?>
-    <?define System32Dir= "SystemFolder" ?>
+    <?ifdef UsbDk64Bit ?>
+      <?define UsbDkPlatform=x64 ?>
+      <?define UsbDkProgramFilesFolder= ProgramFiles64Folder ?>
+      <?define UsbDkWin64= yes ?>
+      <?define System32Dir= "System64Folder" ?>
+      <?define SystemWOW64Dir= "SystemFolder" ?>
+      <?define UsbDkCpuArch= x64 ?>
+      <?define UsbDkHasWOW64= yes ?>
+      <?define UsbDkHasCoinstaller= yes ?>
+      <?define UsbDkInstallerVersion= 200 ?>
+    <?else?>
+      <?define UsbDkPlatform=x86 ?>
+      <?define UsbDkProgramFilesFolder= ProgramFilesFolder ?>
+      <?define UsbDkWin64= no ?>
+      <?define System32Dir= "SystemFolder" ?>
+      <?define UsbDkCpuArch= x86 ?>
+      <?define UsbDkHasWOW64= no ?>
+      <?define UsbDkHasCoinstaller= yes ?>
+      <?define UsbDkInstallerVersion= 200 ?>
+    <?endif?>
   <?endif?>
 
   <Product
@@ -23,7 +43,7 @@
     Language="1033">
     <Package
       Manufacturer="Red Hat, Inc."
-      InstallerVersion="200"
+      InstallerVersion="$(var.UsbDkInstallerVersion)"
       Languages="1033"
       Platform="$(var.UsbDkPlatform)"
       Compressed="yes"
@@ -63,6 +83,7 @@
       <Directory Id="$(var.UsbDkProgramFilesFolder)" Name="UsbDk Runtime Library">
         <Directory Id="UsbDk_Directory" Name="UsbDk Runtime Library">
 
+          <?if $(var.UsbDkPlatform) != arm64 ?>
           <Component Id="UsbDk_Pre7" Guid="{4A0BC5BD-0EEF-4F19-8A31-C940126131D8}" Win64="$(var.UsbDkWin64)">
             <Condition>VersionNT &lt;= 600</Condition>
             <?define SourceSubPath= "XP$(var.Config)" ?>
@@ -99,6 +120,7 @@
             <?undef SourceSubPath ?>
             <?undef OsName ?>
           </Component>
+          <?endif?>
 
           <Component Id="UsbDk_10" Guid="{34AB6305-4379-4E32-A070-8B0612521AC8}" Win64="$(var.UsbDkWin64)">
             <Condition>VersionNT &gt;= 603 AND WIN10FOUND</Condition>
@@ -109,8 +131,20 @@
             <?undef OsName ?>
           </Component>
 
+          <?if $(var.UsbDkPlatform) = arm64 ?>
+          <Directory Id="UsbDk_X86_Directory" Name="x86">
+            <Component Id="UsbDk_ARM64_X86_UserMode" Guid="{A5B8F2F2-3E45-4E32-98A8-4C5F5B1C9D3E}">
+              <File Id="UsbDkHelper_x86" Name="UsbDkHelper.dll" Source="Win10$(var.Config)\UsbDk_Package\x86\UsbDkHelper.dll" Vital="yes" KeyPath="no" DiskId="1" ProcessorArchitecture="x86">
+                <CopyFile Id="WOW64_UsbDkHelper_ARM64" DestinationProperty="$(var.SystemWOW64Dir)" DestinationName="UsbDkHelper.dll"/>
+              </File>
+              <File Id="UsbDkController_x86" Name="UsbDkController.exe" Source="Win10$(var.Config)\UsbDk_Package\x86\UsbDkController.exe" Vital="yes" KeyPath="yes" DiskId="1" ProcessorArchitecture="x86" />
+              <File Id="UsbDkInstHelper_x86" Name="UsbDkInstHelper.exe" Source="Win10$(var.Config)\UsbDk_Package\x86\UsbDkInstHelper.exe" Vital="yes" KeyPath="no" DiskId="1" ProcessorArchitecture="x86" />
+            </Component>
+          </Directory>
+          <?endif?>
+
           <Component Id="UsbDk_TMF" Guid="{2A06187F-4B67-4DBD-86DA-E6FB081CD1B6}" Win64="$(var.UsbDkWin64)">
-            <File Id="UsbDk_TMF" Name="UsbDk.tmf" Source="..\UsbDk.tmf" Vital="yes" KeyPath="no" DiskId="1" ProcessorArchitecture="x64" />
+            <File Id="UsbDk_TMF" Name="UsbDk.tmf" Source="..\UsbDk.tmf" Vital="yes" KeyPath="no" DiskId="1" ProcessorArchitecture="$(var.UsbDkCpuArch)" />
           </Component>
 
         </Directory>
@@ -147,11 +181,16 @@
     </InstallExecuteSequence>
 
     <Feature Id="ProductFeature" Title="UsbDk Runtime Libraries" Level="1">
+      <?if $(var.UsbDkPlatform) != arm64 ?>
       <ComponentRef Id="UsbDk_Pre7" />
       <ComponentRef Id="UsbDk_7" />
       <ComponentRef Id="UsbDk_8" />
       <ComponentRef Id="UsbDk_81" />
+      <?endif?>
       <ComponentRef Id="UsbDk_10" />
+      <?if $(var.UsbDkPlatform) = arm64 ?>
+      <ComponentRef Id="UsbDk_ARM64_X86_UserMode" />
+      <?endif?>
       <ComponentRef Id="UsbDk_TMF" />
     </Feature>
   </Product>

@@ -1,0 +1,16 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="$(Configuration.Contains('Win10'))">
+    <TargetVersion>Windows10</TargetVersion>
+    <KMDF_VERSION_MINOR Condition="'$(KMDF_VERSION_MINOR)'=='11'">15</KMDF_VERSION_MINOR>
+    <USBDK_KMDF_VERSION_MINOR>15</USBDK_KMDF_VERSION_MINOR>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Platform)'=='ARM64'">
+    <ClCompile>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <DisableSpecificWarnings>4996;4530;5208;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <TreatLinkerWarningAsErrors>false</TreatLinkerWarningAsErrors>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

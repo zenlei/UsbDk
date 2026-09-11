@@ -23,6 +23,28 @@
 
 #include "stdafx.h"
 
+bool IsNativeArm64Windows()
+{
+    using IsWow64Process2Fn = BOOL(WINAPI *)(HANDLE, USHORT *, USHORT *);
+
+    auto kernel32 = GetModuleHandle(TEXT("kernel32.dll"));
+    auto isWow64Process2 = reinterpret_cast<IsWow64Process2Fn>(
+        GetProcAddress(kernel32, "IsWow64Process2"));
+    if (isWow64Process2 == nullptr)
+    {
+        return false;
+    }
+
+    USHORT processMachine = IMAGE_FILE_MACHINE_UNKNOWN;
+    USHORT nativeMachine = IMAGE_FILE_MACHINE_UNKNOWN;
+    if (!isWow64Process2(GetCurrentProcess(), &processMachine, &nativeMachine))
+    {
+        return false;
+    }
+
+    return nativeMachine == IMAGE_FILE_MACHINE_ARM64;
+}
+
 void UsbDkHandleHolder<SC_HANDLE>::Close()
 {
     CloseServiceHandle(m_Handle);

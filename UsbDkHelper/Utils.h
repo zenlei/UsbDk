@@ -23,6 +23,8 @@
 
 #pragma once
 
+bool IsNativeArm64Windows();
+
 template <typename HandleT>
 class UsbDkHandleHolder
 {

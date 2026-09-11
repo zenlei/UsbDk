@@ -23,8 +23,11 @@
 
 #pragma once
 
+#if !defined(_ARM64_)
 #include <wdfinstaller.h>
+#endif
 
+#if !defined(_ARM64_)
 #define WDF_COINSTALLER_EXCEPTION_STRING TEXT("WdfCoinstaller exception: ")
 
 class UsbDkWdfCoinstallerFailedException : public UsbDkW32ErrorException
@@ -36,6 +39,8 @@ public:
     UsbDkWdfCoinstallerFailedException(tstring errMsg) : UsbDkW32ErrorException(tstring(WDF_COINSTALLER_EXCEPTION_STRING) + errMsg){}
     UsbDkWdfCoinstallerFailedException(tstring errMsg, DWORD dwErrorCode) : UsbDkW32ErrorException(tstring(WDF_COINSTALLER_EXCEPTION_STRING) + errMsg, dwErrorCode){}
 };
+#endif
+
 class WdfCoinstaller
 {
 public:
@@ -50,7 +55,8 @@ public:
 
 protected:
 private:
-    HMODULE        m_wdfCoinstallerLibrary;
+#if !defined(_ARM64_)
+    HMODULE        m_wdfCoinstallerLibrary = nullptr;
 
     PFN_WDFPREDEVICEINSTALLEX    m_pfnWdfPreDeviceInstallEx;
     PFN_WDFPOSTDEVICEINSTALL    m_pfnWdfPostDeviceInstall;
@@ -71,4 +77,5 @@ private:
 
     void loadWdfCoinstaller();
     void freeWdfCoinstallerLibrary();
+#endif
 };

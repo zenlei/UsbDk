@@ -50,8 +50,9 @@ extern "C" {
 #endif
 
     /* Install UsbDk Driver on the system
-     * Requires usbdk.inf , usbdk.sys,  usbdkHelper.dll and
-     * wdfcoinstaller01009.dll files to exist in current directory
+     * Requires UsbDk.inf, UsbDk.sys and UsbDkHelper.dll in the current
+     * directory. Native ARM64 Windows uses the inbox KMDF path and does not
+     * require a WDF coinstaller; legacy x86/x64 systems may still use one.
      *
      *
      * @params
