@@ -63,8 +63,10 @@ Install\ARM64\Win10Release\UsbDk_Package
 `Install\x86` 和 `Install\x64` 只用于用户态构建输出，脚本会拒绝其中
 出现 `UsbDk.sys`。安装 MSI 需要先安装 WiX，然后运行不带 `NOMSI` 的构建
 命令。`Tools\Installer\buildmsi.bat` 在本分支只接受 `ARM64`，并会在存在
-WDK 测试证书时把 `UsbDk.cer` 复制到 MSI 旁边；不会在安装时自动修改系统
-证书信任区。
+WDK 测试证书时把证书复制到 MSI 旁边；不会在安装时自动修改系统证书信任区。
+默认版本号为 `1.0.22`，对应原项目当前存档标签 `v1.00-22`；CI 或发布任务
+仍可通过 `USBDK_MAJOR_VERSION`、`USBDK_MINOR_VERSION`、`USBDK_BUILD_NUMBER`
+覆盖。
 
 ## 当前验证
 
@@ -77,19 +79,21 @@ WDK 测试证书时把 `UsbDk.cer` 复制到 MSI 旁边；不会在安装时自�
 - ARM64 包包含 8 个文件
 - x86/x64 输出目录均没有 `UsbDk.sys`
 - x64 和 x86 的 `UsbDkController.exe -h` 均能启动
-- WiX Toolset 3.14.1.8722 已成功生成 Release 和 Debug ARM64 MSI，且通过
+- WiX Toolset 3.14.1.8722 已成功生成版本 `1.0.22` 的 Release 和 Debug ARM64 MSI，且通过
   ICE80 校验；x86 文件位于 32 位 Program Files 树，ARM64/x64 文件位于
   64 位目录树
 
 以上属于构建和启动冒烟测试，不代表驱动已经可以稳定工作。由于虚拟机
-未启用测试签名且没有受信任的生产签名，Windows Code Integrity 会拒绝
-加载当前驱动。以下项目仍待完成：
+已经关闭 Secure Boot 并启用测试签名，Debug MSI 已成功安装，`UsbDk` 内核
+服务状态为 `RUNNING`。安装后的 x64 和 x86 上位机都通过 ARM64 驱动完成了
+`-n` 枚举，并看到相同的 3 个 Parallels 虚拟 USB 设备。以下项目仍待完成：
 
-- 测试签名或正式签名环境下的驱动安装和服务启动
-- 设备管理器状态及 USB 设备枚举
+- 真实物理 USB 设备的设备管理器状态和枚举
 - 独占访问、控制/批量/等时传输
 - 卸载、回滚和异常恢复
-- ARM64 MSI 在测试签名环境下的实际安装测试
+
+虚拟 USB 枚举证明了混合架构 MSI、ARM64 驱动和 x64/x86 用户态之间的基本
+调用路径，但不能替代真实 USB 设备传输和压力测试。
 
 ## 使用建议
 
@@ -99,14 +103,19 @@ WDK 测试证书时把 `UsbDk.cer` 复制到 MSI 旁边；不会在安装时自�
 
 ## 测试签名 VM 流程
 
-`Release` ARM64 驱动使用构建时生成的 WDK 测试证书签名。在一次性测试
+`Debug` ARM64 驱动使用构建时生成的 WDK 测试证书签名。在一次性测试
 虚拟机的管理员命令提示符中执行：
 
 ```cmd
-Tools\Installer\prepare-test-signing.cmd UsbDk_99.99.90_ARM64.cer
+Tools\Installer\prepare-test-signing.cmd UsbDk_Debug_1.0.22_ARM64.cer
 ```
 
 然后重启 Windows，再以管理员身份安装 MSI，并检查 `UsbDk` 服务状态。
-`Debug_NoSign` 是明确的未签名构建，只适合编译和调试检查，不能在普通
-Windows 11 ARM64 上加载。测试结束后运行
+`Release` 和 `Debug_NoSign` 是明确的未签名构建，只适合编译和调试检查，不能
+在普通 Windows 11 ARM64 上加载。测试结束后运行
 `Tools\Installer\disable-test-signing.cmd` 并重启，恢复正常签名强制策略。
+
+测试脚本会先检查 UEFI Secure Boot。Secure Boot 开启时，Windows 会拒绝启用
+`TESTSIGNING`；需要先在一次性虚拟机的固件设置中关闭 Secure Boot，再重启
+Windows 后重新运行脚本。这是虚拟机安全策略限制，不是构建或测试证书错误；
+生产机器不应为了测试驱动关闭 Secure Boot。

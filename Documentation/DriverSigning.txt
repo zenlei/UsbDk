@@ -45,6 +45,12 @@ Bcdedit.exe -set TESTSIGNING ON
 
 and reboot the system.
 
+Windows 11 on ARM64 additionally requires UEFI Secure Boot to be disabled
+before TESTSIGNING can be enabled. On a disposable VM, turn off Secure Boot in
+the VM firmware, reboot Windows, install the certificate shipped beside the
+Debug ARM64 MSI, and then run the command above. The repository does not and
+cannot contain the private key used for official production releases.
+
 In order to disable test signing mode, run
 
 Bcdedit.exe -set TESTSIGNING OFF

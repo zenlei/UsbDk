@@ -7,6 +7,13 @@ if errorlevel 1 exit /B 2
 set _f=UsbDk
 set result=0
 echo UsbDk target build: %1 %2
+
+rem Keep local builds aligned with the upstream v1.00-22 source baseline.
+rem CI or a release job can override these environment variables explicitly.
+if not defined USBDK_MAJOR_VERSION set USBDK_MAJOR_VERSION=1
+if not defined USBDK_MINOR_VERSION set USBDK_MINOR_VERSION=0
+if not defined USBDK_BUILD_NUMBER set USBDK_BUILD_NUMBER=22
+
 if /I "%1" == "MSIONLY" goto BUILD_MSI
 if /I "%2" == "NOSIGN" (SET DEBUG_CFG=Debug_NoSign) ELSE (SET DEBUG_CFG=Debug)
 
@@ -193,7 +200,7 @@ exit /B 0
 
 :BUILD_MSI
 pushd Tools\Installer
-SET UsbDkVersion="%USBDK_MAJOR_VERSION%.%USBDK_MINOR_VERSION%.%USBDK_BUILD_NUMBER%"
+SET "UsbDkVersion=%USBDK_MAJOR_VERSION%.%USBDK_MINOR_VERSION%.%USBDK_BUILD_NUMBER%"
 buildmsi.bat %2 ARM64
 set result=%ERRORLEVEL%
 popd
